@@ -6,6 +6,7 @@
 #include <SFML/graphics.hpp>
 
 
+int SCALE_FACTOR = 2;
 int MINES = 20;
 const int W = 16;
 const int H = 16;
@@ -275,8 +276,17 @@ int main(int argc, char *argv[]) { //
     {
         MINES = atoi(argv[1]);
     }
+    if (argc == 3)
+    {
 
+        SCALE_FACTOR = atoi(argv[2]);
 
+        MINES = atoi(argv[1]);
+    }
+    if (SCALE_FACTOR < 1)
+    {
+        SCALE_FACTOR = 1;
+    }
 
     srand(time(0));
     fillMap();
@@ -291,8 +301,9 @@ int main(int argc, char *argv[]) { //
     cursor.setTexture(tileset);
     cursor.setTextureRect(sf::IntRect(80,16,16,16));
     renderer.setTexture(tileset);
+    win.setFramerateLimit(60);
     win.setVerticalSyncEnabled(true);
-    win.setSize(sf::Vector2u(W*16*2, H*16*2));
+    win.setSize(sf::Vector2u(W*16*SCALE_FACTOR, H*16*SCALE_FACTOR));
     win.setPosition(
                     sf::Vector2i
                     (
@@ -300,7 +311,7 @@ int main(int argc, char *argv[]) { //
                     )
     );
 
-    win.setMouseCursorVisible(0);
+
     sf::Clock time;
     bool gameEnd = false;
     while (win.isOpen())
@@ -318,13 +329,13 @@ int main(int argc, char *argv[]) { //
                 if (e.mouseButton.button == sf::Mouse::Left)
                 {
                     if (sf::Mouse::getPosition(win).x > 0 && sf::Mouse::getPosition(win).y > 0)
-                        act(sf::Mouse::getPosition(win).x/32, sf::Mouse::getPosition(win).y/32, 0);
+                        act(sf::Mouse::getPosition(win).x/(16*SCALE_FACTOR), sf::Mouse::getPosition(win).y/(16*SCALE_FACTOR), 0);
                 }
                 if (e.mouseButton.button == sf::Mouse::Right )
                 {
 
                     if (sf::Mouse::getPosition(win).x > 0 && sf::Mouse::getPosition(win).y > 0)
-                        act(sf::Mouse::getPosition(win).x/32, sf::Mouse::getPosition(win).y/32, 1);
+                        act(sf::Mouse::getPosition(win).x/(16*SCALE_FACTOR), sf::Mouse::getPosition(win).y/(16*SCALE_FACTOR), 1);
                 }
                 else
                 {
@@ -345,16 +356,24 @@ int main(int argc, char *argv[]) { //
         }
         if (mouseInsideWindow(win))
         {
-            cursor.setPosition( sf::Vector2f(sf::Mouse::getPosition(win).x/2-4, sf::Mouse::getPosition(win).y/2));
+                            win.setMouseCursorVisible(0);
+            cursor.setPosition( sf::Vector2f(sf::Mouse::getPosition(win).x/SCALE_FACTOR-4, sf::Mouse::getPosition(win).y/SCALE_FACTOR));
             if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
             {
                 cursor.setTextureRect(sf::IntRect(96, 16, 16, 16));
+
             }
             else
             {
                 cursor.setTextureRect(sf::IntRect(80, 16, 16, 16));
+
             }
         }
+        else
+        {
+            win.setMouseCursorVisible(1);
+        }
+
 
         if (checkMap() && !gameEnd)
         {
