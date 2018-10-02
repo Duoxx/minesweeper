@@ -77,6 +77,7 @@ bool isFlag(int x, int y)
 }
 bool flag(int x, int y)
 {
+    if (!is_available(x,y)) return true;
     if (opened_map[x][y] == '#' || opened_map[x][y] == '<')
     {
         if (isFlag(x, y))
@@ -290,32 +291,37 @@ int main(int argc, char *argv[]) { //
 
     srand(time(0));
     fillMap();
-    sf::RenderWindow win(sf::VideoMode(W*16, H*16), "MinesweeperGUI", sf::Style::Titlebar | sf::Style::Close);
+    sf::RenderWindow win(sf::VideoMode(W*16, H*16+32), "MinesweeperGUI", sf::Style::Titlebar | sf::Style::Close);
     sf::Image tilesetraw;
     tilesetraw.loadFromFile("Minesweeper_tileset.png");
     tilesetraw.createMaskFromColor(sf::Color::Green);
     sf::Texture tileset;
     tileset.loadFromImage(tilesetraw);
     sf::Sprite renderer;
+    sf::Sprite smileyRenderer;
     sf::Sprite cursor;
     cursor.setTexture(tileset);
     cursor.setTextureRect(sf::IntRect(80,16,16,16));
     renderer.setTexture(tileset);
+    smileyRenderer.setTexture(tileset);
     win.setFramerateLimit(60);
     win.setVerticalSyncEnabled(true);
-    win.setSize(sf::Vector2u(W*16*SCALE_FACTOR, H*16*SCALE_FACTOR));
+    win.setSize(sf::Vector2u(win.getSize().x*SCALE_FACTOR, win.getSize().y*SCALE_FACTOR));
     win.setPosition(
                     sf::Vector2i
                     (
-                     sf::VideoMode::getDesktopMode().width / 2 - win.getSize().x / 2, sf::VideoMode::getDesktopMode().height / 2 - win.getSize().y / 2
+                     sf::VideoMode::getDesktopMode().width / 2 - win.getSize().x / 2,
+                     sf::VideoMode::getDesktopMode().height / 2 - win.getSize().y / 2
                     )
     );
-
+    smileyRenderer.setPosition(win.getSize().x/2/SCALE_FACTOR-8,H*16+8);
 
     sf::Clock time;
     bool gameEnd = false;
+
     while (win.isOpen())
     {
+        smileyRenderer.setTextureRect(sf::IntRect(0,32,16,16));
         sf::Event e;
         while (win.pollEvent(e))
         {
@@ -324,22 +330,30 @@ int main(int argc, char *argv[]) { //
                 win.close();
 
             }
-            if (e.type == sf::Event::MouseButtonReleased && !gameEnd)
+            if (e.type == sf::Event::MouseButtonReleased)
             {
-                if (e.mouseButton.button == sf::Mouse::Left)
+                if (!gameEnd)
                 {
-                    if (sf::Mouse::getPosition(win).x > 0 && sf::Mouse::getPosition(win).y > 0)
-                        act(sf::Mouse::getPosition(win).x/(16*SCALE_FACTOR), sf::Mouse::getPosition(win).y/(16*SCALE_FACTOR), 0);
-                }
-                if (e.mouseButton.button == sf::Mouse::Right )
-                {
+                    if (e.mouseButton.button == sf::Mouse::Left)
+                    {
+                        if (mouseInsideWindow(win))
+                            act(sf::Mouse::getPosition(win).x/(16*SCALE_FACTOR), sf::Mouse::getPosition(win).y/(16*SCALE_FACTOR), 0);
 
-                    if (sf::Mouse::getPosition(win).x > 0 && sf::Mouse::getPosition(win).y > 0)
-                        act(sf::Mouse::getPosition(win).x/(16*SCALE_FACTOR), sf::Mouse::getPosition(win).y/(16*SCALE_FACTOR), 1);
-                }
-                else
-                {
 
+                    }
+                    if (e.mouseButton.button == sf::Mouse::Right )
+                    {
+
+                        if (mouseInsideWindow(win))
+                            act(sf::Mouse::getPosition(win).x/(16*SCALE_FACTOR), sf::Mouse::getPosition(win).y/(16*SCALE_FACTOR), 1);
+                    }
+                }
+
+                if ( smileyRenderer.getGlobalBounds().contains(sf::Mouse::getPosition(win).x/SCALE_FACTOR,sf::Mouse::getPosition(win).y/SCALE_FACTOR))
+                {
+                    gameEnd = false;
+                    fillMap();
+                    time.restart();
                 }
 
             }
@@ -356,17 +370,22 @@ int main(int argc, char *argv[]) { //
         }
         if (mouseInsideWindow(win))
         {
-                            win.setMouseCursorVisible(0);
+            win.setMouseCursorVisible(0);
             cursor.setPosition( sf::Vector2f(sf::Mouse::getPosition(win).x/SCALE_FACTOR-4, sf::Mouse::getPosition(win).y/SCALE_FACTOR));
             if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
             {
                 cursor.setTextureRect(sf::IntRect(96, 16, 16, 16));
+
 
             }
             else
             {
                 cursor.setTextureRect(sf::IntRect(80, 16, 16, 16));
 
+            }
+            if(sf::Mouse::isButtonPressed(sf::Mouse::Left))
+            {
+                smileyRenderer.setTextureRect(sf::IntRect(32,32,16,16));
             }
         }
         else
@@ -382,14 +401,22 @@ int main(int argc, char *argv[]) { //
             std::cout << "you win, press enter to restart" << std::endl;
             gameEnd = true;
         }
+
         if (isLose() && !gameEnd)
         {
             showBombs();
+
             std::cout << "you lose, press enter to restart" << std::endl;
             gameEnd = true;
         }
-        win.clear();
+        if (isLose())
+        {
+            smileyRenderer.setTextureRect(sf::IntRect(16,32,16,16));
+        }
+        win.clear(sf::Color(216,216,216,255));
         draw_opened(win, renderer);
+
+        win.draw(smileyRenderer);
         win.draw(cursor);
         win.display();
     }
