@@ -1,4 +1,4 @@
-#Minesweeper game in C++
+# Minesweeper game in C++
 
 What do you need to compile this:
 1. TDM 32bit Compiler 5.1.0
